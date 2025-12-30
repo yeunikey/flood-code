@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+
+  db-flood:
+    image: postgres:15
+    container_name: db-2
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: nic
+      POSTGRES_PASSWORD: Astana2024!bigdata
+      POSTGRES_DB: flood
+    volumes:
+      - postgres_data_flood:/var/lib/postgresql/data
+
+  # NestJS backend
+  backend:
+    container_name: 'backend-flood'
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - db-flood
+    ports:
+      - "3004:3001"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/mydb
+      MBTILES_PATH: './app/mbtiles'
+      UPLOADS_PATH: '/app/uploads'
+    volumes:
+      - backend_uploads:/app/uploads 
+
+  # Next.js frontend
+  frontend:
+    container_name: 'frontend-flood'
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "3003:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3004
+
+volumes:
+  postgres_data_flood:
+  mbtiles_data:
+  backend_uploads:
